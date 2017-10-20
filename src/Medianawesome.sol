@@ -9,36 +9,36 @@ contract Medianawesome is DSThing {
     }
     mapping (address => Feed) public feeds;
     mapping (uint8 => address) public owners;
-    uint128 val;
-    bool    has;
-    uint8 public next = 1;
-    uint8 public min = 1;
+    uint128       val;
+    uint32 public zzz;
+    uint8  public next = 1;
+    uint8  public min = 1;
 
     function prod(uint128 val_, uint32 zzz_) public {
         feeds[msg.sender] = Feed(val_, zzz_);
-        (val, has) = compute();
+        (val, zzz) = compute();
         // LogValues
     }
     function void() public {
         feeds[msg.sender].zzz = 0;
     }
     function read() public view returns (bytes32) {
-        assert(has);
+        assert(now < zzz);
         return bytes32(val);
     }
     function peek() public view returns (bytes32,bool) {
-        return (bytes32(val), has);
+        return (bytes32(val), now < zzz);
     }
     function set(address owner) public auth {
         owners[next] = owner;
         next = next + 1;
     }
-    function compute() internal view returns (uint128, bool) {
+    function compute() internal view returns (uint128, uint32) {
         uint128[] memory wuts = new uint128[](next - 1);
         uint8 ctr = 0;
         for (uint8 i = 1; i < next; i++) {
             Feed memory feed = feeds[owners[i]];
-            if (feed.zzz > now) {
+            if (now < feed.zzz) {
                 if (ctr == 0 || feed.val >= wuts[ctr - 1]) {
                     wuts[ctr] = feed.val;
                 } else {
@@ -56,7 +56,7 @@ contract Medianawesome is DSThing {
         }
 
         if (ctr < min) {
-            return (val, false);
+            return (val, 0);
         }
 
         uint128 value;
@@ -68,6 +68,7 @@ contract Medianawesome is DSThing {
             value = wuts[(ctr - 1) / 2];
         }
 
-        return (value, true);
+        // How do we calculate expiration here?
+        return (value, uint32(-1));
     }
 }
